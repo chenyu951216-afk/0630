@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Crypto Trade Decision Desk</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">10000U 名目金額 · 650U 最大風險 · 30% 勝率模型</p>
+          <h1>Crypto Trade Decision Desk</h1>
+        </div>
+        <div class="market-chip" id="marketStatus">等待行情</div>
+      </header>
+
+      <section class="workspace">
+        <form class="panel trade-form" id="tradeForm">
+          <div class="panel-heading">
+            <h2>下單條件</h2>
+            <button type="button" class="ghost-button" id="fetchMarketButton">抓行情</button>
+          </div>
+
+          <div class="form-grid">
+            <label>
+              <span>幣種</span>
+              <input id="coinInput" name="coin" type="text" placeholder="BTC / ETH / SOL" autocomplete="off" required />
+            </label>
+
+            <label>
+              <span>市場</span>
+              <select id="marketInput" name="market">
+                <option value="futures">USDT 永續</option>
+                <option value="spot">現貨</option>
+              </select>
+            </label>
+
+            <fieldset class="direction-group">
+              <legend>方向</legend>
+              <div class="segmented" role="radiogroup" aria-label="交易方向">
+                <button type="button" class="segment active" data-direction="long">做多</button>
+                <button type="button" class="segment" data-direction="short">做空</button>
+              </div>
+              <input id="directionInput" name="direction" type="hidden" value="long" />
+            </fieldset>
+
+            <label>
+              <span>進場價</span>
+              <input id="entryInput" name="entryPrice" type="number" step="any" placeholder="空白使用現價" />
+            </label>
+
+            <label>
+              <span>止損價</span>
+              <input id="stopInput" name="stopLoss" type="number" step="any" required />
+            </label>
+
+            <label>
+              <span>TP1</span>
+              <input id="tp1Input" name="tp1" type="number" step="any" required />
+            </label>
+
+            <label>
+              <span>TP2</span>
+              <input id="tp2Input" name="tp2" type="number" step="any" required />
+            </label>
+
+            <label>
+              <span>TP3</span>
+              <input id="tp3Input" name="tp3" type="number" step="any" required />
+            </label>
+
+            <label>
+              <span>成本 buffer %</span>
+              <input id="costInput" name="costBufferPct" type="number" step="0.01" min="0" max="2" value="0.12" />
+            </label>
+          </div>
+
+          <div class="action-row">
+            <button type="submit" class="primary-button" id="analyzeButton">分析這筆單</button>
+            <button type="button" class="secondary-button" id="resetButton">清空</button>
+          </div>
+        </form>
+
+        <aside class="panel quote-panel">
+          <div class="panel-heading">
+            <h2>即時行情</h2>
+            <span class="muted" id="quoteTime">尚未抓取</span>
+          </div>
+          <div class="quote-price" id="quotePrice">--</div>
+          <dl class="metric-list">
+            <div>
+              <dt>交易對</dt>
+              <dd id="quoteSymbol">--</dd>
+            </div>
+            <div>
+              <dt>24H 漲跌</dt>
+              <dd id="quoteChange">--</dd>
+            </div>
+            <div>
+              <dt>24H 高 / 低</dt>
+              <dd id="quoteRange">--</dd>
+            </div>
+          </dl>
+        </aside>
+      </section>
+
+      <section class="results-grid" id="resultsGrid" hidden>
+        <section class="panel decision-panel" id="decisionPanel">
+          <div>
+            <p class="eyebrow">交易判斷</p>
+            <h2 id="decisionTitle">--</h2>
+          </div>
+          <div class="decision-stats" id="decisionStats"></div>
+          <ul class="reason-list" id="reasonList"></ul>
+          <ul class="warning-list" id="warningList"></ul>
+          <div class="suggestion-box" id="suggestionBox" hidden></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>TP 分批止盈</h2>
+            <span class="muted">依 R 值自動調配倉位</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>點位</th>
+                  <th>價格</th>
+                  <th>平倉</th>
+                  <th>名目</th>
+                  <th>數量</th>
+                  <th>估計獲利</th>
+                  <th>R</th>
+                </tr>
+              </thead>
+              <tbody id="tpTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>移動止損</h2>
+            <span class="muted">成交後照表執行</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>觸發</th>
+                  <th>價格</th>
+                  <th>新止損</th>
+                  <th>動作</th>
+                </tr>
+              </thead>
+              <tbody id="stopTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel history-panel">
+          <div class="panel-heading">
+            <h2>本機紀錄</h2>
+            <div class="button-pair">
+              <button type="button" class="ghost-button" id="exportButton">匯出 CSV</button>
+              <button type="button" class="ghost-button danger" id="clearHistoryButton">清除</button>
+            </div>
+          </div>
+          <div id="historyList" class="history-list"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>

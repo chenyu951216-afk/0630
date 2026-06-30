@@ -1,0 +1,20 @@
+{
+  "name": "crypto-trade-decision-desk",
+  "version": "1.0.0",
+  "description": "A fast crypto trade decision calculator for risk, reward, take-profit allocation, and stop-loss planning.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "crypto",
+    "trading",
+    "risk-management",
+    "zeabur"
+  ],
+  "author": "",
+  "license": "MIT"
+}
